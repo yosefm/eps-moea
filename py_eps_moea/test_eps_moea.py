@@ -3,7 +3,6 @@
 import unittest
 from numpy import testing
 from numpy import array, vstack, hstack, empty, zeros, r_, c_, bool
-from numpy import sqrt
 from eps_moea import *
 
 class TestEpsMOEA(unittest.TestCase):
@@ -108,13 +107,13 @@ class TestEpsMOEA(unittest.TestCase):
         pop = array([[0, 0], [0, 1], [1, 0], [1, 1]])
         dst = distances(pop)
         correct_dist = c_[
-            r_[0, 1, 1, sqrt(2)],
-            r_[1, 0, sqrt(2), 1],
-            r_[1, sqrt(2), 0, 1],
-            r_[sqrt(2), 1, 1, 0], ]
+            r_[0, 1, 1, 2],
+            r_[1, 0, 2, 1],
+            r_[1, 2, 0, 1],
+            r_[2, 1, 1, 0], ]
         testing.assert_array_equal(dst, correct_dist)
         
         compare_to = r_[-1, 0]
         dst = distances(pop, compare_to)
-        testing.assert_array_equal(dst, r_[1, sqrt(2), 2, sqrt(5)])
+        testing.assert_array_equal(dst, r_[1, 2, 4, 5])
 
