@@ -1,0 +1,12 @@
+
+eps-moea
+--------
+
+By: Yosef Meller, mellerf@netvision.net.il
+
+The code in this repository implements a light version of the epsilon-MOEA algorithm for mmulti-objective optimization. It contains a matlab version and a Python versions.
+
+No installation is required (or possible). For Matlab, add the m_eps_moea directory to the path, as you would for any other toolbox, or change to that directory before execution. For Python, you can similarly add to the PYTHONPATH environment variable, or change to the py_eps_moea directory.
+
+The files may be used under the GNU GPL license, version 3.0 or later at your discretion. See http://www.gnu.org/licenses/gpl-3.0.html for the license terms.
+
