@@ -14,8 +14,7 @@ def distances(population, compare_to=None):
         vector of distances to one element if compare_to is given.
     """
     if compare_to is not None:
-        diff = (compare_to - population)**2
-        return diff.sum(axis=1)
+        return ((compare_to - population)**2).sum(axis=1)
     
     # Otherwise, compare everyone to everyone else:
     dist_func = N.vectorize(lambda ii, jj: ((population[ii] - population[jj])**2).sum())
