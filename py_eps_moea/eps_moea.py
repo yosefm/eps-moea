@@ -114,54 +114,67 @@ def archive_accept(archive, fitness, contend_fit, contend_idx, grid):
     # We have more than one level of selection from the population,
     # so its convenient to work with indices rather than boolean arrays.
     archive_idxs = N.where(archive)[0]
-    accepted = 1
-    
+        
     # Calculate the grid-fitness of the population:
     archive_size = sum(archive)
-    grid_fit = fitness[archive] - N.fmod(fitness[archive], grid)
+    dists = N.fmod(fitness[archive], grid)
+    grid_fit = fitness[archive] - dists
     # and of the contender:
-    grid_cont = contend_fit - N.fmod(contend_fit, grid)
-     
-    # Instead of Matlab's unique(..., 'rows') we use python's sets.
+    cont_dist = N.fmod(contend_fit, grid)
+    grid_cont = contend_fit - cont_dist
+    
+    # We look for opportunities to reject the contender, along the way removing 
+    # any dominated member of the archive:
     for vertex in map(N.array, set(tuple(row) for row in grid_fit)):
         if (grid_cont == vertex).all():
             # This hypercube may have non-dominated members.
             in_grid = N.where((grid_fit == vertex).all(axis=1))[0];
             
-            top_dogs = (fitness[archive_idxs[in_grid]] <= contend_fit).all(axis=1) and \
+            top_dogs = (fitness[archive_idxs[in_grid]] <= contend_fit).all(axis=1) & \
                 (fitness[archive_idxs[in_grid]] < contend_fit).any(axis=1);
             if top_dogs.any():
-                return 0
+                archive[contend_idx] = False
+                return False
             
-            underdogs = (contend_fit <= fitness[archive_idxs[in_grid]]).all(axis=1) and \
-                (rep_cond_fit < fitness[archive_idxs[in_grid]]).any(axis=1);
+            underdogs = (contend_fit <= fitness[archive_idxs[in_grid]]).all(axis=1) & \
+                (contend_fit < fitness[archive_idxs[in_grid]]).any(axis=1);
             
-            archive[archive_idxs[in_grid[underdogs]]] = False;
+            archive[archive_idxs[in_grid[underdogs]]] = False
+            # Of the remaining solutions, the closest to the grid is taken:
+            if underdogs.all():
+                continue
+                
+            dist_squares = (dists[in_grid[~underdogs]]**2).sum(axis=1)
+            cont_dist_square = (cont_dist**2).sum()
+            remaining = dist_squares < cont_dist_square
+            
+            if remaining.any():
+                archive[archive_idxs[N.argmin(dist_squares)]] = True
+                archive[contend_idx] = False
+                return False
         
         elif (grid_cont >= vertex).all() and (grid_cont > vertex).any():
             # The contender is dominated. The function can end, because
             # it's impossible that others in the archive may still be dominated.
-            archive[contend_idx] = False; # make sure no leftovers from last iteration.
-            return 0
+            archive[contend_idx] = False # make sure no leftovers from last iteration.
+            return False
             
         elif (grid_cont <= vertex).all() and (grid_cont < vertex).any():
             # This hypercube is dominated by the new solution, exclude all its
             # members from the archive:
-            in_grid = N.where((grid_fit == vertex).all(axis=1))[0][0]
+            in_grid = N.where((grid_fit == vertex).all(axis=1))[0]
             archive[archive_idxs[in_grid]] = False
-            archive[contend_idx] = True
+    
+    archive[contend_idx] = True
+    return True
         
-    return accepted
-        
-def eps_moea_optimize(creature, pop_size, niche_size, conv_gens, num_gens, objectives, grid):
+def eps_moea_optimize(creature, pop_size, conv_gens, num_gens, objectives, grid):
     """Run an optimization using the epsilon-moea algorithm.
     
     Arguments: 
     creature - a description of the problem in a Creature object.
     pop_size - number of individuals to use for the simulation. The more you use,
         The better is the pareto front, but it's slower and has diminishing returns.
-    niche_size - the maximum distance between asubjects that generates fitness 
-        punishment (distance in the normed genotype space).
     conv_gens - after this many iterations with no change in the archive population, 
         the iteration stops.
     nun_gens - maximum total number of iterations, with or without convergence.
@@ -174,55 +187,33 @@ def eps_moea_optimize(creature, pop_size, niche_size, conv_gens, num_gens, objec
     archive - the final archive.
     """
     population = creature.gen_population(pop_size)
-    niche_size = niche_size**2
     archive_stagnation = 0
-    normed_pop = creature.normalize(population)
-    dist = distances(normed_pop)
-    dist[dist == 0] = N.inf
 
     # Initial fitness:
     fitness = objectives(population)
     archive = pareto_front(fitness)
     
-    # Inflict the cholera on crowded populations:
-    crowded = dist < niche_size;
-    cholera = (crowded*dist/niche_size).sum(axis=1) # quadratic niching.
-    niched_fit = fitness - cholera[:,None];
-    
     while (archive_stagnation < conv_gens) and (num_gens > 0):
         # Generate new solution:
-        mama = pop_select(niched_fit);
+        mama = pop_select(fitness);
         papa = archive_select(archive);
         offspring = creature.breed(population[mama], population[papa])
-        
-        # Offspring niching:
-        dist_of = distances(normed_pop, offspring)
+        contend_fit = objectives(offspring)
         
         # Accept the new solution to the population and archive:
-        contend_fit = objectives(offspring)
         repl = pop_accept(fitness, contend_fit)
+        
         if repl is None:
             archive_stagnation += 1
             num_gens -= 1
             continue
         
-        population[repl] = offspring
-        normed_pop[repl] = creature.normalize(offspring)
-        dist[:,repl] = dist_of
-        dist[repl] = dist_of
-        dist[repl, repl] = N.inf
-        
-        # Offspring niching:
-        # The offspring is punished for being close to existing solutions, but 
-        # the existing ones are only judged relative to other existing solutions.
-        crowded = dist_of < niche_size
-        cholera = sum(crowded * dist_of / niche_size) # linear niching.
-        niched_cont = contend_fit - cholera
-        
-        accepted = archive_accept(archive, niched_fit, niched_cont, repl, grid)
+        accepted = archive_accept(archive, fitness, contend_fit, repl, grid)
         
         # Prepare next iteration:
         fitness[repl] = contend_fit
+        population[repl] = offspring
+        
         if accepted:
             archive_stagnation = 0
         else:
@@ -236,9 +227,9 @@ if __name__ == "__main__":
     import test_functions
     from creature import Creature
     
-    grid = N.r_[0.01, 0.01]
+    grid = N.r_[0.05, 0.05]
     cr = Creature(N.zeros(30), N.ones(30), 0.1)
-    population, fitness, archive = eps_moea_optimize(cr, 100, 0.43, 600, 25000, \
+    population, fitness, archive = eps_moea_optimize(cr, 100, 600, 25000, \
         test_functions.tau1, grid)
     
     import pylab as P
