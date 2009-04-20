@@ -1,25 +1,6 @@
 import numpy as N
 from scipy import linalg as LA
 
-def distances(population, compare_to=None):
-    """calculates normalized euclidean distance between each two elements in the 
-    population.
-    
-    Arguments: 
-    population - the points in the decision space for which to find distances,
-        normed to the ranges allowed for each variable.
-    compare_to - optional element of the population that we compare only to him.
-    
-    Returns: a square matrix of distance from individual i to individual j, or a 
-        vector of distances to one element if compare_to is given.
-    """
-    if compare_to is not None:
-        return ((compare_to - population)**2).sum(axis=1)
-    
-    # Otherwise, compare everyone to everyone else:
-    dist_func = N.vectorize(lambda ii, jj: ((population[ii] - population[jj])**2).sum())
-    return N.fromfunction(dist_func, (population.shape[0], population.shape[0]))
-
 def pareto_front(fitness):
     """Given multiple fitness values of a population, find which individuals are in 
     the pareto-front(i.e. the non-dominated subset of the population.
@@ -116,7 +97,6 @@ def archive_accept(archive, fitness, contend_fit, contend_idx, grid):
     archive_idxs = N.where(archive)[0]
         
     # Calculate the grid-fitness of the population:
-    archive_size = sum(archive)
     dists = N.fmod(fitness[archive], grid)
     grid_fit = fitness[archive] - dists
     # and of the contender:
@@ -227,10 +207,13 @@ if __name__ == "__main__":
     import test_functions
     from creature import Creature
     
+    import time
+    t = time.time()
     grid = N.r_[0.05, 0.05]
     cr = Creature(N.zeros(30), N.ones(30), 0.1)
     population, fitness, archive = eps_moea_optimize(cr, 100, 600, 25000, \
         test_functions.tau1, grid)
+    print time.time() - t
     
     import pylab as P
     archive = N.where(archive)[0]

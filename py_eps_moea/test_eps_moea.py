@@ -101,19 +101,3 @@ class TestEpsMOEA(unittest.TestCase):
         accepted = archive_accept(archive, fit, contend_fit, repl, coarse_grid)
         self.failUnless(accepted)
         testing.assert_array_equal(archive, hstack(([True, False, True], zeros(17, dtype=bool))))
-    
-    def test_distances(self):
-        """Distances between solutions are calculated right."""
-        pop = array([[0, 0], [0, 1], [1, 0], [1, 1]])
-        dst = distances(pop)
-        correct_dist = c_[
-            r_[0, 1, 1, 2],
-            r_[1, 0, 2, 1],
-            r_[1, 2, 0, 1],
-            r_[2, 1, 1, 0], ]
-        testing.assert_array_equal(dst, correct_dist)
-        
-        compare_to = r_[-1, 0]
-        dst = distances(pop, compare_to)
-        testing.assert_array_equal(dst, r_[1, 2, 4, 5])
-

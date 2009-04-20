@@ -61,7 +61,8 @@ function [archive, accepted] = archive_accept(archive, fitness, contend_fit, con
                 archive(contend_idx) = 0;
                 accepted = 0;
                 return
-			
+			end
+
 		elseif all(grid_cont >= vertex) && any(grid_cont > vertex)
 			% The contender is dominated. The function can end, because
 			% it's impossible that others in the archive may still be 
