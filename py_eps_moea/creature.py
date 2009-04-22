@@ -1,9 +1,14 @@
 # This class represents a creature (problem) genotype (decision space)
+#
+# References:
+# [1] Kalyanmoy Deb, An efficient constraint handling method for genetic 
+# algorithms, 31 May 2000
+
 from numpy import random
 import numpy as N
 
 class Creature(object):
-    def __init__(self, low_bnds, up_bnds, mutation_chance):
+    def __init__(self, low_bnds, up_bnds, mutation_chance, mutation_prm=20):
         if len(low_bnds) != len(up_bnds):
             raise ValueError("Upper bounds number not equal to lower-bounds number.")
         if (low_bnds > up_bnds).any():
@@ -13,6 +18,7 @@ class Creature(object):
         self._low_bnds = low_bnds
         self._ranges = up_bnds - low_bnds
         self._p_mute = mutation_chance
+        self._et_m = mutation_prm
     
     def chromosome_len(self):
         return len(self._low_bnds)
@@ -22,7 +28,7 @@ class Creature(object):
         allowed range for each gene.
         
         Arguments:
-        vaues - a c by p array, for chromosome-length c and some p.
+        values - a c by p array, for chromosome-length c and some p.
         """
         return (values - self._low_bnds)/self._ranges
         
@@ -61,16 +67,28 @@ class Creature(object):
         offspring - a length-g array with the genotype of the offspring after 
             recombination and mutation.
         """
-        # Recombination place:
+        # Recombination place, using one-point crossover:
         recomb = N.random.random_integers(0, self.chromosome_len() - 1)
         offspring = N.r_[mama[:recomb], papa[recomb:]]
         
         # Possibly mutate:
-        if N.random.rand() > self._p_mute: 
+        which_genes = N.random.rand(self.chromosome_len()) < self._p_mute
+        if not any(which_genes):
             return offspring
         
-        gene = N.random.random_integers(0, self.chromosome_len() - 1)
-        # mutation is done by assigning a new value to the gene in the allowed range.
-        offspring[gene] = self.denormalize_one(N.random.rand(), gene)
+        # Polinomial mutation, see ref. [1]
+        delta = 1 - N.array((offspring[which_genes] - self._low_bnds[which_genes], \
+            self._up_bnds[which_genes] - offspring[which_genes])).min(axis=0) \
+            / self._ranges[which_genes]
+            
+        mute_bases = N.random.random_sample(which_genes.sum())
+        perturb = N.empty_like(mute_bases)
+        close = mute_bases <= 0.5
+        
+        perturb[close] = (2*mute_bases[close] + \
+            (1 - 2*mute_bases[close])*delta[close]**(self._et_m + 1))**(1./(self._et_m + 1)) - 1
+        perturb[~close] = 1 - (2*(1 - mute_bases[~close]) + \
+            2*(mute_bases[~close] - 0.5)*delta[~close]**(self._et_m + 1))**(1./(self._et_m + 1))
+        offspring[which_genes] += perturb*self._ranges[which_genes]
+        
         return offspring
-    

@@ -24,18 +24,22 @@ def pareto_front(fitness):
         
     return pf
 
-def pop_select(fitness):
+def pop_select(fitness, archive):
     """Randomly mates two subjects from a population and selects the dominating
     subject. If no dominance exists, select the second one (this is arbitrary).
     
     Arguments: 
     fitness - a p by t array, where fitness(p,t) is the value of function t for 
         individual p.
+    archive - the current archive population gets immunity, this variable is a 
+        boolean vector saying which of the population is in the archive.
     
     Returns: 
     the index of the subject selected for breeding.
     """
-    compete = N.random.random_integers(0, fitness.shape[0] - 1, size=2)
+    legible = N.where(~archive)[0]
+    compete = legible[N.random.random_integers(0, fitness.shape[0] - archive.sum() - 1, size=2)]
+    
     if (fitness[compete[0]] <= fitness[compete[1]]).all() and \
         (fitness[compete[0]] < fitness[compete[1]]).any():
         return compete[0]
@@ -53,8 +57,8 @@ def archive_select(archive_marker):
     Returns:
     the index in the population of the selected archive member.
     """
-    archive_size = archive_marker.sum()
-    return N.where(archive_marker)[0][N.random.random_integers(0, archive_size - 1)]
+    return N.where(archive_marker)[0][\
+        N.random.random_integers(0, archive_marker.sum() - 1)]
 
 def pop_accept(fitness, contend_fit):
     """Find some poor underdog in the population that is pareto-dominated by an 
@@ -102,22 +106,23 @@ def archive_accept(archive, fitness, contend_fit, contend_idx, grid):
     # and of the contender:
     cont_dist = N.fmod(contend_fit, grid)
     grid_cont = contend_fit - cont_dist
+    cont_dist_square = (cont_dist**2).sum()
     
     # We look for opportunities to reject the contender, along the way removing 
     # any dominated member of the archive:
     for vertex in map(N.array, set(tuple(row) for row in grid_fit)):
         if (grid_cont == vertex).all():
             # This hypercube may have non-dominated members.
-            in_grid = N.where((grid_fit == vertex).all(axis=1))[0];
+            in_grid = N.where((grid_fit == vertex).all(axis=1))[0]
             
             top_dogs = (fitness[archive_idxs[in_grid]] <= contend_fit).all(axis=1) & \
-                (fitness[archive_idxs[in_grid]] < contend_fit).any(axis=1);
+                (fitness[archive_idxs[in_grid]] < contend_fit).any(axis=1)
             if top_dogs.any():
                 archive[contend_idx] = False
                 return False
             
             underdogs = (contend_fit <= fitness[archive_idxs[in_grid]]).all(axis=1) & \
-                (contend_fit < fitness[archive_idxs[in_grid]]).any(axis=1);
+                (contend_fit < fitness[archive_idxs[in_grid]]).any(axis=1)
             
             archive[archive_idxs[in_grid[underdogs]]] = False
             # Of the remaining solutions, the closest to the grid is taken:
@@ -125,13 +130,14 @@ def archive_accept(archive, fitness, contend_fit, contend_idx, grid):
                 continue
                 
             dist_squares = (dists[in_grid[~underdogs]]**2).sum(axis=1)
-            cont_dist_square = (cont_dist**2).sum()
             remaining = dist_squares < cont_dist_square
             
             if remaining.any():
-                archive[archive_idxs[N.argmin(dist_squares)]] = True
+                archive[archive_idxs[in_grid[N.argmin(dist_squares)]]] = True
                 archive[contend_idx] = False
                 return False
+            else:
+                archive[archive_idxs[in_grid[~underdogs]]] = False
         
         elif (grid_cont >= vertex).all() and (grid_cont > vertex).any():
             # The contender is dominated. The function can end, because
@@ -175,7 +181,7 @@ def eps_moea_optimize(creature, pop_size, conv_gens, num_gens, objectives, grid)
     
     while (archive_stagnation < conv_gens) and (num_gens > 0):
         # Generate new solution:
-        mama = pop_select(fitness);
+        mama = pop_select(fitness, archive);
         papa = archive_select(archive);
         offspring = creature.breed(population[mama], population[papa])
         contend_fit = objectives(offspring)
@@ -210,7 +216,7 @@ if __name__ == "__main__":
     import time
     t = time.time()
     grid = N.r_[0.05, 0.05]
-    cr = Creature(N.zeros(30), N.ones(30), 0.1)
+    cr = Creature(N.zeros(30), N.ones(30), 0.033)
     population, fitness, archive = eps_moea_optimize(cr, 100, 600, 25000, \
         test_functions.tau1, grid)
     print time.time() - t
