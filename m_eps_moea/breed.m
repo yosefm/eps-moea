@@ -16,10 +16,25 @@ function offspring = breed(creature, mama, papa)
 	recomb = fix(rand() * chromosome_length(creature) + 1);
 	offspring = [mama(1:recomb), papa(recomb+1:end)];
 	
-	% Possibly mutate:
-	if rand() > creature.p_mute; return; end
-	gene = fix(rand() * chromosome_length(creature) + 1);
-	% mutation is done by assigning a new value to the gene in the allowed range.
-	offspring(gene) = rand() * (creature.up_bnds(gene) - creature.low_bnds(gene)) + ...
-		creature.low_bnds(gene);
+    % Possibly mutate:
+    which_genes = rand(1, chromosome_length(creature)) < creature.p_mute;
+    if ~any(which_genes), return, end
+        
+    % Polinomial mutation, see ref. [1]
+    delta = 1 - min(offspring(which_genes) - creature.low_bnds(which_genes), ...
+        creature.up_bnds(which_genes) - offspring(which_genes)) ...
+        ./ creature.ranges(which_genes);
+        
+    mute_bases = rand(1, sum(which_genes));
+    perturb = zeros(size(mute_bases));
+    close = mute_bases <= 0.5;
+    
+    perturb(close) = (2*mute_bases(close) + ...
+        (1 - 2*mute_bases(close)).*delta(close).^(creature.et_m + 1))...
+        .^(1./(creature.et_m + 1)) - 1;
+    perturb(~close) = 1 - (2*(1 - mute_bases(~close)) + ...
+        2*(mute_bases(~close) - 0.5).*delta(~close).^(creature.et_m + 1))...
+        .^(1./(creature.et_m + 1));
+    offspring(which_genes) = offspring(which_genes) + ...
+        perturb.*creature.ranges(which_genes);
 end

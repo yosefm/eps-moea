@@ -6,13 +6,24 @@
 % up_bnds - upper-bounds for the same. Must have the same length as 
 %	low_bnds
 % mutation_chance - the probability of a mutation happening.
+% et_m - strength of mutation (see ref [1])
 % Returns: a record representing the creature.
+%
+% Reference:
+% [1] Kalyanmoy Deb, An efficient constraint handling method for genetic 
+% algorithms, 31 May 2000
 
-function creature = construct_creature(low_bnds, up_bnds, mutation_chance)
+function creature = construct_creature(low_bnds, up_bnds, mutation_chance, et_m)
 	creature.up_bnds = up_bnds;
 	creature.low_bnds = low_bnds;
 	creature.p_mute = mutation_chance;
-	
+	creature.ranges = up_bnds - low_bnds;
+    
+    if nargin ~= 4 % Matlab's way of default arguments.
+        et_m = 20;
+    end
+    creature.et_m = et_m;
+    
 	% Validation:
 	if length(creature.up_bnds) ~= length(creature.low_bnds)
 		error('Upper bounds number not equal to lower-bounds number.');

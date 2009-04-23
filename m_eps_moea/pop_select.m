@@ -5,12 +5,15 @@
 % fitness - a p by t array, for p individuals and t target 
 %	functions, where fitness(p,t) is the value of function t 
 %	for individual p.
+% archive - a boolean vector stating which of the population is in the
+%   archive.
 % Returns:
 % sel - the index of the subject selected for breeding.
 
-function sel = pop_select(fitness)
+function sel = pop_select(fitness, archive)
+    legible = find(~archive);
 	% select two indexes randomly
-	compete = fix(rand(1, 2) * size(fitness, 1) + 1);
+	compete = legible(fix(rand(1, 2) * (size(fitness, 1) - sum(archive)) + 1));
 	if all(fitness(compete(1),:) <= fitness(compete(2),:)) && ...
 		any(fitness(compete(1),:) < fitness(compete(2),:))
 		sel = compete(1);

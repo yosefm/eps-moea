@@ -28,6 +28,7 @@ function [archive, accepted] = archive_accept(archive, fitness, contend_fit, con
 
 	% and of the contender:
     cont_dist = rem(contend_fit, grid);
+    cont_dist_square = sum(cont_dist.^2);
 	grid_cont = contend_fit - cont_dist;
 	
 	% Now check each relevant grid-point in turn.
@@ -52,15 +53,16 @@ function [archive, accepted] = archive_accept(archive, fitness, contend_fit, con
             if all(underdogs), continue, end
             
             dist_squares = sum(dists(in_grid(~underdogs)).^2, 2);
-            cont_dist_square = sum(cont_dist.^2);
             remaining = dist_squares < cont_dist_square;
             
             if any(remaining)
                 [mn, argmin] = min(dist_squares);
-                archive(archive_idxs(argmin)) = 1;
+                archive(archive_idxs(in_grid(argmin))) = 1;
                 archive(contend_idx) = 0;
                 accepted = 0;
                 return
+            else
+                archive(archive_idxs(in_grid(~underdogs))) = 0;
 			end
 
 		elseif all(grid_cont >= vertex) && any(grid_cont > vertex)

@@ -30,7 +30,7 @@ function [population, fitness, parent_archive] = eps_moea_optimize(creature, pop
 	
 	while (archive_stagnation < conv_gens) && (num_gens > 0)
 		% generate new solution:
-		mama = pop_select(fitness);
+		mama = pop_select(fitness, parent_archive);
 		papa = archive_select(parent_archive);
 		offspring = breed(creature, population(mama,:), population(papa,:));
 		

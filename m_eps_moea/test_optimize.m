@@ -2,10 +2,10 @@
 % Tzitzler E. et al, Comparison of Multiobjective Evolutionary Algorithms: 
 % Empirical Results, Evolutionary computation, 2000, vol 8(2), pp. 173-195.
 
-grid = [0.01, 0.01];
+grid = [0.05, 0.05];
 
 % test problem 1:
-cr = construct_creature(zeros(1, 30), ones(1, 30), 0.1);
+cr = construct_creature(zeros(1, 30), ones(1, 30), 0.033);
 [population, fitness, archive] = eps_moea_optimize(cr, 100, 600, 25000, @tau1, grid);
 archive = find(archive);
 
