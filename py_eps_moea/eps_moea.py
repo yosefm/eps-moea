@@ -1,5 +1,4 @@
 import numpy as N
-from scipy import linalg as LA
 
 def pareto_front(fitness):
     """Given multiple fitness values of a population, find which individuals are in 
