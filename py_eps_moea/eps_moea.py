@@ -132,7 +132,7 @@ def archive_accept(archive, fitness, contend_fit, contend_idx, grid):
             remaining = dist_squares < cont_dist_square
             
             if remaining.any():
-                archive[archive_idxs[in_grid[N.argmin(dist_squares)]]] = True
+                archive[archive_idxs[in_grid[~underdogs][N.argmin(dist_squares)]]] = True
                 archive[contend_idx] = False
                 return False
             else:
