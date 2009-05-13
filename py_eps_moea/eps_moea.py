@@ -212,12 +212,21 @@ if __name__ == "__main__":
     import test_functions
     from creature import Creature
     
+    # Select which test to run from the commandline, default TZD1
+    import sys
+    testfun = test_functions.tau1
+    if len(sys.argv) == 2:
+        try:
+            testfun = test_functions.tzd[int(sys.argv[1])]
+        except IndexError:
+            pass # Keep the default
+        
     import time
     t = time.time()
     grid = N.r_[0.05, 0.05]
     cr = Creature(N.zeros(30), N.ones(30), 0.033)
-    population, fitness, archive = eps_moea_optimize(cr, 100, 600, 25000, \
-        test_functions.tau1, grid)
+    population, fitness, archive = eps_moea_optimize(cr, 100, 600, 10000, \
+        testfun, grid)
     print time.time() - t
     
     import pylab as P
