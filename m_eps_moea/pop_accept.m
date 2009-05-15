@@ -17,11 +17,19 @@ function repl = pop_accept(fitness, contend_fit)
 		any(rep_cond_fit < fitness, 2);
 	
 	% If no underdog is found, bail out:
-	if ~any(underdogs)
-		repl = 0;
-		return
-	end
-	
-	% Replace the first underdog with the contender:
-	repl = find(underdogs, 1, 'first');
+	if any(underdogs)
+    	% Replace the first underdog with the contender:
+        repl = find(underdogs, 1, 'first');
+        return
+    end
+    
+    top_dogs = all(rep_cond_fit >= fitness, 2) & ...
+		any(rep_cond_fit > fitness, 2);
+    
+    if any(top_dogs)
+        repl = 0;
+        return 
+    end
+    
+    repl = fix(rand()*size(fitness, 1)) + 1;
 end

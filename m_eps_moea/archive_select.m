@@ -11,5 +11,5 @@
 function sel = archive_select(archive_marker)
 	archive_size = sum(archive_marker);
 	archive_ind = find(archive_marker);
-	sel = archive_ind(fix(rand() * archive_size + 1));
+	sel = archive_ind(fix(rand() * archive_size)  + 1);
 end

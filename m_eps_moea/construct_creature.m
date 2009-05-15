@@ -7,21 +7,35 @@
 %	low_bnds
 % mutation_chance - the probability of a mutation happening.
 % et_m - strength of mutation (see ref [1])
+% recomb_chance - chance of any recombination happening
+% et_c - strength of recombination distribution function [1].
+%
 % Returns: a record representing the creature.
 %
 % Reference:
 % [1] Kalyanmoy Deb, An efficient constraint handling method for genetic 
 % algorithms, 31 May 2000
 
-function creature = construct_creature(low_bnds, up_bnds, mutation_chance, et_m)
-	creature.up_bnds = up_bnds;
+function creature = construct_creature(low_bnds, up_bnds, ...
+    mutation_chance, et_m, recomb_chance, et_c)
+
+    creature.up_bnds = up_bnds;
 	creature.low_bnds = low_bnds;
 	creature.p_mute = mutation_chance;
 	creature.ranges = up_bnds - low_bnds;
     
-    if nargin ~= 4 % Matlab's way of default arguments.
+    % Matlab's way of default arguments. So primitive.
+    if nargin < 6
+        et_c = 15;
+    end
+    if nargin < 5
+        recomb_chance = 1;
+    end
+    if nargin < 4
         et_m = 20;
     end
+    creature.p_recomb = recomb_chance;
+    creature.et_c = et_c;
     creature.et_m = et_m;
     
 	% Validation:

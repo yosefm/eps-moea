@@ -9,7 +9,7 @@
 function fitness = tau3(contenders)
 	fit1 = contenders(:,1);
 	g = 1 + 9/(size(contenders, 2) - 1) .* sum(contenders(:,2:end), 2);
-	h = 1 - sqrt(fit1 ./ g) - (fit1 ./ g)*sin(10*pi*fit1);
+	h = 1 - sqrt(fit1 ./ g) - (fit1 ./ g).*sin(10*pi*fit1);
 
     % When fit1 gets negative zero, Matlab gets confused. NumPy's sqrt
     % gives sqrt(numpy.NZERO) = -0, Matlab's gives -0.0i. To get the same 

@@ -131,11 +131,11 @@ def archive_accept(archive, fitness, grid_fit, contend_fit, grid_cont):
             
             # Of the remaining solutions, the closest to the grid is taken:                
             dist_squares = ((arch_fit[in_grid[~underdogs]] - \
-                arch_fit[in_grid[~underdogs]])**2).sum(axis=1)
-            remaining = dist_squares <= ((contend_fit - grid_cont)**2).sum()
+                arch_grid_fit[in_grid[~underdogs]])**2).sum(axis=1)
+            remaining = dist_squares < ((contend_fit - grid_cont)**2).sum()
             
             if remaining.any():
-                archive[archive_idxs[in_grid[~underdogs][N.argmin(dist_squares)]]] = True
+                archive[archive_idxs[in_grid]] = True
                 return False
         
         elif high and not low:

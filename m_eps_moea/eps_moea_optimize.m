@@ -27,34 +27,41 @@ function [population, fitness, parent_archive] = eps_moea_optimize(creature, pop
 	fitness = objectives(population);
 	num_objects = size(fitness, 2);
 	parent_archive = pareto_front(fitness);
-	
+	grid_fit = fitness - rem(fitness, grid(ones(pop_size, 1),:));
+    
 	while (archive_stagnation < conv_gens) && (num_gens > 0)
 		% generate new solution:
 		mama = pop_select(fitness, parent_archive);
 		papa = archive_select(parent_archive);
-		offspring = breed(creature, population(mama,:), population(papa,:));
+		offsprings = breed(creature, population(mama,:), population(papa,:));
 		
-		% accept the new solution to the population and archive:
-		contend_fit = objectives(offspring);
-		repl = pop_accept(fitness, contend_fit);
-		if (repl == 0)
-			archive_stagnation = archive_stagnation + 1;
-			num_gens = num_gens - 1;
-			continue
-		end
-		
-		population(repl,:) = offspring;
-		[new_archive, accepted] = archive_accept(parent_archive, ...
-            fitness, contend_fit, repl, grid);
-		
-		% prepare next iteration:
-		fitness(repl,:) = contend_fit;
-		if accepted
-			archive_stagnation = 0;
-		else
-			archive_stagnation = archive_stagnation + 1;
-		end
-		parent_archive = new_archive;
+        for offs = 1:size(offsprings, 2)
+            % accept the new solution to the population and archive:
+            contend_fit = objectives(offsprings{offs});
+            grid_cont = contend_fit - rem(contend_fit, grid);
+            
+            [parent_archive, accepted] = archive_accept(...
+                parent_archive, fitness, grid_fit, contend_fit, grid_cont);
+            repl = pop_accept(fitness, contend_fit);
+            
+            if accepted
+                archive_stagnation = 0;
+            end
+            if (repl == 0)
+                num_gens = num_gens - 1;
+                continue
+            end
+
+            % prepare next iteration:
+            population(repl,:) = offsprings{offs};
+            fitness(repl,:) = contend_fit;
+            parent_archive(repl) = accepted;
+            grid_fit(repl,:) = grid_cont;
+        end
+        
+        if ~accepted
+            archive_stagnation = archive_stagnation + 1;
+        end
 		num_gens = num_gens - 1;
 	end
 end
