@@ -38,11 +38,11 @@ def pop_select(fitness, archive):
     """
     compete = N.random.random_integers(0, fitness.shape[0] - 1, size=2)
     
-    if (fitness[0] <= fitness[1]).all() and \
-        (fitness[0] < fitness[1]).any():
+    if (fitness[compete[0]] <= fitness[compete[1]]).all() and \
+        (fitness[compete[0]] < fitness[compete[1]]).any():
         return compete[0]
-    if (fitness[1] <= fitness[0]).all() and \
-        (fitness[1] < fitness[0]).any():
+    if (fitness[compete[1]] <= fitness[compete[0]]).all() and \
+        (fitness[compete[1]] < fitness[compete[0]]).any():
         return compete[1]
     if N.random.rand() < 0.5:
         return compete[0]
