@@ -107,11 +107,12 @@ def archive_accept(archive, fitness, grid_fit, contend_fit, grid_cont):
     # so its convenient to work with indices rather than boolean arrays.
     archive_idxs = N.where(archive)[0]
     arch_grid_fit = grid_fit[archive_idxs]
+    arch_grid_fit.flags.writeable = False # For fast use of set objects
     arch_fit = fitness[archive_idxs]
     
     # We look for opportunities to reject the contender, along the way removing 
     # any dominated member of the archive:
-    for vertex in map(N.array, set(tuple(row) for row in arch_grid_fit)):
+    for vertex in map(N.frombuffer, set(row.data for row in arch_grid_fit)):
         high = (grid_cont > vertex).any()
         low = (grid_cont < vertex).any()
         if not(high or low):
