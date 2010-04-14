@@ -48,7 +48,6 @@ function [population, fitness, parent_archive] = eps_moea_optimize(creature, pop
                 archive_stagnation = 0;
             end
             if (repl == 0)
-                num_gens = num_gens - 1;
                 continue
             end
 
