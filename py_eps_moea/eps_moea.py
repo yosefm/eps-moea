@@ -1,3 +1,14 @@
+# See the documentation of eps_moea_optimize() for details.
+#
+# Includes a test program. Just run this module as a script and see.
+# Giving one integer argument to the script runs it on test problem TZDn
+# where n is the argument. For example:
+#
+#   python eps_moea_optimize.py 3 
+#
+# Will do TZD3.
+# See the test_functions module for details on the TZD problems.
+
 import numpy as N
 
 def pareto_front(fitness):
@@ -153,7 +164,8 @@ def archive_accept(archive, fitness, grid_fit, contend_fit, grid_cont):
     return True
         
 def eps_moea_optimize(creature, pop_size, conv_gens, num_gens, objectives, grid):
-    """Run an optimization using the epsilon-moea algorithm.
+    """Run an optimization using the epsilon-moea algorithm. Assumes the
+    problem is in cannonical form - all target functions are to be minimized.
     
     Arguments: 
     creature - a description of the problem in a Creature object.

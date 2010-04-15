@@ -1,4 +1,6 @@
-% Run an optimization using the epsilon-moea algorithm.
+% Run an optimization using the epsilon-moea algorithm. Assumes that the
+% optimization problem is in canonical form - all target functions are to be
+% minimized.
 %
 % Arguments: 
 % creature - a description of the problem as returned from construct creature.
