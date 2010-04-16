@@ -30,7 +30,7 @@ class TestEpsMOEA(unittest.TestCase):
         # replaced:
         contend_fit = r_[0, 0]
         repl = pop_accept(fit, contend_fit)
-        self.failUnless(repl == 0)
+        self.failIf(repl is None)
         
         # Test 2: (100,100) is dominated by all, it is thrown away.
         contend_fit = r_[100, 100]
@@ -69,9 +69,14 @@ class TestEpsMOEA(unittest.TestCase):
 
         for grid in grids.T:
             new_arch = archive.copy()
-            accepted = archive_accept(new_arch, fit, contend_fit, repl, grid)
+            eps_fit = fit - N.fmod(fit, grid)
+            eps_cont = contend_fit - N.fmod(contend_fit, grid)
+            accepted = archive_accept(new_arch, fit, eps_fit, contend_fit, eps_cont)
+            
             self.failUnless(accepted)
-            self.failUnless(new_arch[0] and not new_arch[1:].any())
+            # Since in this test the contender is not in the population,
+            # the entire archive is emptied.
+            self.failIf(new_arch[1:].any())
 
         # Test 2: (2.1, 0.51) is dominated by the archive, the archive must return 
         # unchanged.
@@ -80,7 +85,9 @@ class TestEpsMOEA(unittest.TestCase):
 
         for grid in grids.T:
             new_arch = archive.copy()
-            accepted = archive_accept(new_arch, fit, contend_fit, repl, grid)
+            eps_fit = fit - N.fmod(fit, grid)
+            eps_cont = contend_fit - N.fmod(contend_fit, grid)
+            accepted = archive_accept(new_arch, fit, eps_fit, contend_fit, eps_cont)
             self.failIf(accepted);
             testing.assert_array_equal(new_arch, archive)
 
@@ -91,13 +98,20 @@ class TestEpsMOEA(unittest.TestCase):
 
         for grid in grids[:,:2]:
             new_arch = archive.copy()
-            accepted = archive_accept(new_arch, fit, contend_fit, repl, grid)
+            eps_fit = fit - N.fmod(fit, grid)
+            eps_cont = contend_fit - N.fmod(contend_fit, grid)
+            accepted = archive_accept(new_arch, fit, eps_fit, contend_fit, eps_cont)
+            
             self.failUnless(accepted)
-            # because the kicked-out solution was at the front, the representation is 
-            # unchanged.
+            # Only the place of the second item of the front (index 2 in the 
+            # population) is changed.
+            self.failIf(new_arch[2])
+            new_arch[2] = True
             testing.assert_array_equal(new_arch, archive)
 
         # on the coarse grid solutions are lost:
-        accepted = archive_accept(archive, fit, contend_fit, repl, coarse_grid)
+        eps_fit = fit - N.fmod(fit, coarse_grid)
+        eps_cont = contend_fit - N.fmod(contend_fit, coarse_grid)
+        accepted = archive_accept(archive, fit, eps_fit, contend_fit, eps_cont)
         self.failUnless(accepted)
-        testing.assert_array_equal(archive, hstack(([True, False, True], zeros(17, dtype=bool))))
+        testing.assert_array_equal(archive, array(([True] + [False]*19)))
