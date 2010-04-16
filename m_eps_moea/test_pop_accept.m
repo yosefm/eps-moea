@@ -8,7 +8,7 @@ fit(:,2) = 1./fit(:,1);
 % replaced:
 contend_fit = [0, 0];
 repl = pop_accept(fit, contend_fit);
-assert(repl == 1);
+assert(repl ~= 0);
 
 % Test 2: (100,100) is dominated by all, it is thrown away.
 contend_fit = [100, 100];
