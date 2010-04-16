@@ -24,9 +24,12 @@ contend_fit = [0, 0];
 repl = pop_accept(fit, contend_fit);
 
 for grid = grids
-	[new_arch, accepted] = archive_accept(archive, fit, contend_fit, repl, grid');
+    eps_fit = fit - rem(fit, grid(:,ones(20, 1))');
+    eps_cont = contend_fit - rem(contend_fit, grid');
+	[new_arch, accepted] = archive_accept(archive, fit, eps_fit, ...
+        contend_fit, eps_cont);
 	assert(accepted);
-	assert(new_arch(1) == 1 && all(new_arch(2:end) == 0));
+	assert(all(new_arch == 0));
 end
 
 % Test 2: (2.1, 0.51) is dominated by the archive, the archive must return 
@@ -35,7 +38,10 @@ contend_fit = [2.1, 0.51];
 repl = pop_accept(fit, contend_fit);
 
 for grid = grids
-	[new_arch, accepted] = archive_accept(archive, fit, contend_fit, repl, grid');
+    eps_fit = fit - rem(fit, grid(:,ones(20, 1))');
+    eps_cont = contend_fit - rem(contend_fit, grid');
+	[new_arch, accepted] = archive_accept(archive, fit, eps_fit, ...
+        contend_fit, eps_cont);
 	assert(~accepted);
 	assert(all(new_arch == archive));
 end
@@ -46,14 +52,23 @@ contend_fit = [1.5, 0.4];
 repl = pop_accept(fit, contend_fit);
 
 for grid = grids(:,1:2)
-	[new_arch, accepted] = archive_accept(archive, fit, contend_fit, repl, grid');
-	assert(accepted);
-	% because the kicked-out solution was at the front, the representation is 
-	% unchanged.
-	assert(all(new_arch == archive));
+    eps_fit = fit - rem(fit, grid(:,ones(20, 1))');
+    eps_cont = contend_fit - rem(contend_fit, grid');
+	[new_arch, accepted] = archive_accept(archive, fit, eps_fit, ...
+        contend_fit, eps_cont);
+
+    assert(accepted);
+    % Only the place of the second item of the front (index 3 in the
+    % population) is changed.
+    assert(new_arch(3) == 0);
+    new_arch(3) = 1;
+    assert(all(new_arch == archive));
 end
 
 % on the coarse grid solutions are lost:
-[new_arch, accepted] = archive_accept(archive, fit, contend_fit, repl, coarse_grid');
+eps_fit = fit - rem(fit, coarse_grid(:,ones(20, 1))');
+eps_cont = contend_fit - rem(contend_fit, coarse_grid');
+[new_arch, accepted] = archive_accept(archive, fit, eps_fit, ...
+        contend_fit, eps_cont);
 assert(accepted);
-assert(all(new_arch == [1, 0, 1, zeros(1,17)]'))
+assert(all(new_arch == [1, zeros(1,19)]'))
