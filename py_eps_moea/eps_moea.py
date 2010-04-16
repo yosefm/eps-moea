@@ -88,7 +88,8 @@ def pop_accept(fitness, contend_fit):
     """
     underdogs = (contend_fit <= fitness).all(axis=1) & (contend_fit < fitness).any(axis=1)
     if underdogs.any():
-        return N.where(underdogs)[0][0]
+        repl_idx = N.random.random_integers(0, underdogs.sum() - 1)
+        return N.nonzero(underdogs)[0][repl_idx]
         
     # Is he dominated?
     top_dogs = (contend_fit >= fitness).all(axis=1) & (contend_fit > fitness).any(axis=1)
